@@ -22,6 +22,8 @@ Should you use this dataset, please cite the [paper](TODO) as follows:
 - symptoms: dyspnea (`dysp`), cough (`cough`), pain (`pain`), fever (`fever`), nasal (`nasal`)
 - underlying conditions: asthma (`asthma`), smoking (`smoking`), COPD (`COPD`), hay fever (`hay_fever`)
 - external influence (non-clinical): policy (`policy`), self-employed (`self_empl`), season (`season`)
+- treatment: antibiotics (`antibiotics`)
+- outcome: days at home (`days_at_home`)
 - text note (`text`): clinical note describing the patient encounter
 - compact text note (`advanced_text`): more compact (and therefore more difficult) version of the note in `text`
 
