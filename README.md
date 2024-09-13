@@ -17,7 +17,13 @@ Should you use this dataset, please cite the [paper](TODO) as follows:
 
 ```
 
-**Data access** 
+**Data access** To access the SynSUM dataset, please download the [csv file](https://github.com/prabaey/SynSUM/blob/main/SynSUM.csv) from this repository. The dataset contains the following variables (corresponding column names are between brackets): 
+- diagnoses: pneumonia (`pneu`) and common cold (`cold`)
+- symptoms: dyspnea (`dysp`), cough (`cough`), pain (`pain`), fever (`fever`), nasal (`nasal`)
+- underlying conditions: asthma (`asthma`), smoking (`smoking`), COPD (`COPD`), hay fever (`hay_fever`)
+- external influence (non-clinical): policy (`policy`), self-employed (`self_empl`), season (`season`)
+- text note (`text`): clinical note describing the patient encounter
+- compact text note (`advanced_text`): more compact (and therefore more difficult) version of the note in `text`
 
 **Potential use** The SynSUM dataset is primarily designed to facilitate research on clinical information extraction in the presence of tabular background variables, which can be linked through domain knowledge to concepts of interest to be extracted from the text - the symptoms, in the case of SynSUM. Secondary uses include research on the automation of clinical reasoning over both tabular data and text, causal effect estimation in the presence of tabular and/or textual confounders, and multi-modal synthetic data generation.
 
