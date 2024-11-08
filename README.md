@@ -48,4 +48,15 @@ Should you use this dataset, please cite the [paper](https://arxiv.org/abs/2409.
 `utils` folder: 
 - `prompt_generation.py`: Helper functions for generating the text prompts from the tabular patient records.
 - `bayesian_network.py`: Helper functions for learning the Bayesian network parameters from the data, used for training the BN-tab baseline.
-- `neural_classifier.py`: Helper functions for learning the neural classifier weights, used for training the neural-text and neural-text-tab baselines. 
+- `neural_classifier.py`: Helper functions for learning the neural classifier weights, used for training the neural-text and neural-text-tab baselines.
+
+`data` folder: 
+- `df_synsum.p`: Pickled dataframe containing 10.000 patient records, including both tabular features and clinical text notes (the same as the [csv file](https://github.com/prabaey/SynSUM/blob/main/SynSUM.csv), but in Pandas format).
+- `df_prompts.p`: Pickled dataframe containing an extended version of all patient records, including the prompts and the information that was used to construct these (mentions of symptoms, descriptors of symptoms, etc.)
+- `df_train.p` and `df_test.p`: Train (8000 samples) and test (2000 samples) sets used to train and evaluate the baseline models in `symptom_predictor_baselines.ipynb`.
+- `emb` folder: Train and test dataframes containing the precomputed embeddings of the ``history`` and ``physical examination`` portions of the text notes. These are used to train the neural-text and neural-text-tab baselines in `symptom_predictor_baselines.ipynb`.
+
+`results` folder: Contains dataframes with the results of the symptom predictor baseline models when evaluated over the test set, for all symptoms and various settings. For more information, see the notebook `symptom_predictor_baselines`. 
+
+`eval` folder: Contains the scores assigned by each evaluator in our expert evaluation. For more information, see the notebook `expert_evaluation.ipynb`.
+  
