@@ -9,7 +9,7 @@ import numpy as np
 
 class TextEmbClassifier(torch.nn.Module):
     """
-    Classifier that takes text embeddings as an input, and outputs a symptom probability
+    Classifier that takes text embeddings as an input, and outputs a symptom logit
 
     n_emb: dimension of text embedding input
     hidden_dim: list of dimensions of hidden layers. if empty, no transformation is applied. if len>0, final dimension should be 1
@@ -42,11 +42,6 @@ class TextEmbClassifier(torch.nn.Module):
                 prev_dim = dim
             self.hidden_activation = torch.nn.ReLU() # ReLU is used as activation after every hidden layer
 
-        if self.hidden_dim[-1] == 3: # fever has 3 possible classes (none, low, high) -> use softmax
-            self.softmax = True
-        else: # other symptoms are binary -> can use sigmoid
-            self.softmax = False
-
     def forward(self, emb): 
         """
         forward function. transforms embedding of dim n_emb to output of size 1 (or 3) by applying linear layers
@@ -63,11 +58,7 @@ class TextEmbClassifier(torch.nn.Module):
             out = self.dropouts[-1](out) # if only one layer, dropout should be applied to inputs
             out = self.linears[-1](out)
 
-            if self.softmax: 
-                return torch.nn.functional.softmax(out, dim=1) # softmax at the end (multiclass)
-            else:
-                return out.sigmoid() # sigmoid at the end (binary)
-            
+        return out            
 
 class EmbeddingDataset(Dataset):
     """
@@ -276,7 +267,7 @@ def train_sympt_classifier(train, test, sympt, n_emb, hidden_dim, dropout, devic
     if sympt == "fever": 
         loss = torch.nn.CrossEntropyLoss(reduction="none")
     else: 
-        loss = torch.nn.BCELoss(reduction="none") # all symptoms are binary, except for fever 
+        loss = torch.nn.BCEWithLogitsLoss(reduction="none") # all symptoms are binary, except for fever 
 
     train_loss = []
     test_loss = []
@@ -296,11 +287,11 @@ def train_sympt_classifier(train, test, sympt, n_emb, hidden_dim, dropout, devic
                 input = x["emb"]
 
             if sympt == "fever": 
-                pred = model(input) # predictions of model, shape (bs, 3)
-                batch_loss = loss(pred, x[sympt].long()).sum()
+                logit = model(input) # predictions of model, shape (bs, 3)
+                batch_loss = loss(logit, x[sympt].long()).sum()
             else: 
-                pred = model(input).squeeze() # predictions of model, shape (bs,)
-                batch_loss = loss(pred, x[sympt]).sum()
+                logit = model(input).squeeze() # predictions of model, shape (bs,)
+                batch_loss = loss(logit, x[sympt]).sum()
             
             batch_loss.backward()
 
@@ -321,11 +312,11 @@ def train_sympt_classifier(train, test, sympt, n_emb, hidden_dim, dropout, devic
                     input = x_test["emb"]
 
                 if sympt == "fever": 
-                    pred = model(input) # predictions of model, shape (bs, 3)
-                    batch_loss = loss(pred, x_test[sympt].long()).sum()
+                    logit = model(input) # predictions of model, shape (bs, 3)
+                    batch_loss = loss(logit, x_test[sympt].long()).sum()
                 else: 
-                    pred = model(input).squeeze() # predictions of model, shape (bs,)
-                    batch_loss = loss(pred, x_test[sympt]).sum()
+                    logit = model(input).squeeze() # predictions of model, shape (bs,)
+                    batch_loss = loss(logit, x_test[sympt]).sum()
                 test_loss.append(batch_loss.item()/len(test))
 
     # return train_loss, test_loss, model
@@ -353,10 +344,12 @@ def eval_symptom_classifier(sympt, dataset, model, with_tab=False):
                 input = torch.cat((x_val["tab"], x_val["emb"]), dim=1) # concatenate tabular features and text
             else: 
                 input = x_val["emb"]
-            preds = model(input).squeeze()
+            logits = model(input).squeeze()
             if sympt == "fever": 
+                preds = torch.nn.functional.softmax(logits, dim=1)
                 y_pred.append(torch.argmax(preds,dim=1).cpu().numpy()) # Get class with the highest probability (argmax)
             else: 
+                preds = logits.sigmoid()
                 y_pred.append(preds.round().cpu().numpy())  # Round predictions for binary classification -> if > 0.5, then predict class 1
             y_true.append(x_val[sympt].cpu().numpy())
     
