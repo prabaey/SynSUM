@@ -58,5 +58,7 @@ Should you use this dataset, please cite the [paper](https://arxiv.org/abs/2409.
 
 `results` folder: Contains dataframes with the results of the symptom predictor baseline models when evaluated over the test set, for all symptoms and various settings. For more information, see the notebook `symptom_predictor_baselines`. 
 
-`eval` folder: Contains the scores assigned by each evaluator in our expert evaluation. For more information, see the notebook `expert_evaluation.ipynb`.
+`eval` folder: 
+- `Evaluator_{i}.csv`: CSV file containing the scores assigned by evaluator i in our expert evaluation. For more information, see the notebook `expert_evaluation.ipynb`.
+- `Instructions_clinical_evaluation.pdf`: File with instructions on how to conduct the clinical evaluation, which was carefully explained to each expert evaluator.
   
