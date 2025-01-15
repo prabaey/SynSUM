@@ -60,67 +60,6 @@ class TextEmbClassifier(torch.nn.Module):
 
         return out            
 
-class EmbeddingDataset(Dataset):
-    """
-    Turn each patient record into a torch Dataset item 
-    df: the original dataframe containing the patient features (symptoms, tabular features, text notes)
-    sympt: the symptom label we are trying to predict from the text 
-    device: what device to put the tensors on (CPU or GPU)
-    type: embedding type to use (hist, phys, both_mean, both_concat)
-    compl: note complexity (normal or adv)
-    """
-    def __init__(self, df, sympt, device, type="both_mean", compl="normal"):
-        self.type = type
-        self.sympt = sympt
-        self.df = df.copy()
-        self.device = device
-        self.df[self.sympt] = self.df[self.sympt].replace({"yes":1, "no": 0, "none":0, "low": 1, "high": 2})
-        self.compl = compl
-
-    def __len__(self):
-        return len(self.df)
-
-    def __getitem__(self, idx):
-        """
-        returns a dictionary with the following components: 
-        - sympt: contains a tensor with the symptom values for sympt
-        - emb: contains the text embedding for the note, constructed using one of the four strategies encoded in self.type
-        """
-
-        x = {}
-
-        sympt = self.df.iloc[idx][self.sympt]
-        x[self.sympt] = torch.tensor(sympt, dtype=torch.float32, device=self.device)
-
-        # select hist and phys embeddings according to note complexity (normal or advanced)
-        if self.compl == "normal": 
-            hist = "hist_emb"
-            phys = "phys_emb"
-        elif self.compl == "adv": 
-            hist = "adv_hist_emb"
-            phys = "adv_phys_emb"
-        else: 
-            print("invalid complexity")
-
-        # create note embedding based on requested type 
-        if self.type == "hist": # only use history embedding
-            x["emb"] = torch.tensor(self.df.iloc[idx][hist], device=self.device)
-        elif self.type == "phys": # only use phys embedding 
-            x["emb"] = torch.tensor(self.df.iloc[idx][phys], device=self.device)
-        elif self.type == "both_mean": 
-            emb_hist = self.df.iloc[idx][hist]
-            emb_phys = self.df.iloc[idx][phys]
-            emb = (emb_hist+emb_phys)/2 # total embedding is the mean of history and phys exam embedding
-            x["emb"] = torch.tensor(emb, device=self.device)
-        elif self.type == "both_concat": 
-            emb_hist = self.df.iloc[idx][hist]
-            emb_phys = self.df.iloc[idx][phys]
-            emb = np.concatenate([emb_hist,emb_phys]) # total embedding is the concatenation of history and phys exam embedding
-            x["emb"] = torch.tensor(emb, device=self.device)
-        else: 
-            print("invalid type")
-
-        return x
 
 class TabularTextDataset(Dataset):
     """
@@ -257,7 +196,8 @@ def train_sympt_classifier(train, test, sympt, n_emb, hidden_dim, dropout, devic
     torch.manual_seed(seed)
     
     train_loader = DataLoader(train, batch_size=bs_train, shuffle=True)
-    test_loader = DataLoader(test, batch_size=len(test), shuffle=False)
+    if test is not None: 
+        test_loader = DataLoader(test, batch_size=len(test), shuffle=False)
 
     # put model on the device
     model = TextEmbClassifier(n_emb, hidden_dim, dropout, seed)
@@ -302,22 +242,23 @@ def train_sympt_classifier(train, test, sympt, n_emb, hidden_dim, dropout, devic
         
         train_loss.append(epoch_loss/len(train))
 
-        model.eval() # put model in eval mode
-        with torch.no_grad():
-            for x_test in test_loader: 
+        if test is not None:
+            model.eval() # put model in eval mode
+            with torch.no_grad():
+                for x_test in test_loader: 
 
-                if with_tab:
-                    input = torch.cat((x_test["tab"], x_test["emb"]), dim=1) # concatenate tabular features and text
-                else: 
-                    input = x_test["emb"]
+                    if with_tab:
+                        input = torch.cat((x_test["tab"], x_test["emb"]), dim=1) # concatenate tabular features and text
+                    else: 
+                        input = x_test["emb"]
 
-                if sympt == "fever": 
-                    logit = model(input) # predictions of model, shape (bs, 3)
-                    batch_loss = loss(logit, x_test[sympt].long()).sum()
-                else: 
-                    logit = model(input).squeeze() # predictions of model, shape (bs,)
-                    batch_loss = loss(logit, x_test[sympt]).sum()
-                test_loss.append(batch_loss.item()/len(test))
+                    if sympt == "fever": 
+                        logit = model(input) # predictions of model, shape (bs, 3)
+                        batch_loss = loss(logit, x_test[sympt].long()).sum()
+                    else: 
+                        logit = model(input).squeeze() # predictions of model, shape (bs,)
+                        batch_loss = loss(logit, x_test[sympt]).sum()
+                    test_loss.append(batch_loss.item()/len(test))
 
     # return train_loss, test_loss, model
     return train_loss, test_loss, model

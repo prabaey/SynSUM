@@ -352,10 +352,6 @@ def prompt_GPT_advanced_note(patient):
             max_tokens = 1000,
             messages = messages, # with assistant response and additional telegram-style request added
         )
-        
-        for message in messages: 
-            print(message)
-            print("-----------")
 
         text_note_shorter = res.choices[0].message.content
 
