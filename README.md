@@ -44,6 +44,7 @@ Should you use this dataset, please cite the [paper](https://arxiv.org/abs/2409.
 - `text_generation.ipynb`: Demonstrates how text prompts are created based on the information in the tabular patient record. These prompts were fed to GPT-4o to generate the clinical text notes in our dataset.
 - `symptom_predictor_baselines.ipynb`: Demonstrates how we ran some simple symptom predictor baselines on the SynSUM dataset. There are two tabular baselines (BN-tab and XGBoost-tab), one text-only neural classifier (neural-text) and one neural classifier that also sees the tabular features at the input (neural-text-tab).
 - `expert_evaluation.ipynb`: Presents the results of our expert evaluation, where five experts rated the notes on several aspects, including consistency with the prompt and realism of the added context.
+- `span_annotations.ipynb`: Describes our automated pipeline for annotating the clinical notes with spans pinpointing in which exact phrase(s) each symptom is mentioned in the note. 
 
 `utils` folder: 
 - `prompt_generation.py`: Helper functions for generating the text prompts from the tabular patient records.
@@ -55,10 +56,13 @@ Should you use this dataset, please cite the [paper](https://arxiv.org/abs/2409.
 - `df_prompts.p`: Pickled dataframe containing an extended version of all patient records, including the prompts and the information that was used to construct these (mentions of symptoms, descriptors of symptoms, etc.)
 - `df_train.p` and `df_test.p`: Train (8000 samples) and test (2000 samples) sets used to train and evaluate the baseline models in `symptom_predictor_baselines.ipynb`.
 - `emb` folder: Train and test dataframes containing the precomputed embeddings of the ``history`` and ``physical examination`` portions of the text notes. These are used to train the neural-text and neural-text-tab baselines in `symptom_predictor_baselines.ipynb`.
+- `spans` folder: Span annotations of the specific phrases in which each symptom is mentioned in the notes. `normal_span_annotations.json` contains these annotations for the normal notes, while `adv_span_annotations.json` contains these for the compact advanced notes. Each of the 10.000 entries contains a list of extracted spans, where each span is made up of the following attributes: symptom ("symptom"), extracted phrase ("text") and start and end index for where this phrase can be found in the note ("start" and "end"). 
 
 `results` folder: Contains dataframes with the results of the symptom predictor baseline models when evaluated over the test set, for all symptoms and various settings. For more information, see the notebook `symptom_predictor_baselines`. 
 
 `eval` folder: 
-- `Evaluator_{i}.csv`: CSV file containing the scores assigned by evaluator i in our expert evaluation. For more information, see the notebook `expert_evaluation.ipynb`.
-- `Instructions_clinical_evaluation.pdf`: File with instructions on how to conduct the clinical evaluation, which was carefully explained to each expert evaluator.
+- `notes/Evaluator_{i}.csv`: CSV file containing the scores assigned by evaluator i in our expert evaluation. For more information, see the notebook `expert_evaluation.ipynb`.
+- `notes/Instructions_clinical_evaluation.pdf`: File with instructions on how to conduct the clinical evaluation, which was carefully explained to each expert evaluator.
+- `spans/span_eval_dataset.txt`: Random subset of 100 notes for which the automatically extracted symptom spans were manually evaluated.
+- `spans/span_eval_results.csv`: Results of the manual evaluation of the extracted symptom spans. 
   
