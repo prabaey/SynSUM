@@ -67,7 +67,7 @@ class TabularTextDataset(Dataset):
     df: the original dataframe containing the patient features (symptoms, tabular features, text notes)
     sympt: the symptom label we are trying to predict from the text and tabular features
     device: what device to put the tensors on (CPU or GPU)
-    type: embedding type to use (hist, phys, both_mean, both_concat)
+    type: embedding type to use (hist, phys, both_mean, both_concat, or span)
     compl: note complexity (normal or adv)
     setting: evidence setting, i.e. what tabular features to include at the input of the classifier (all, no_sympt, realistic)
     encoder: OneHotEncoder
@@ -164,6 +164,9 @@ class TabularTextDataset(Dataset):
             emb_phys = self.df.iloc[idx][phys]
             emb = np.concatenate([emb_hist,emb_phys]) # total embedding is the concatenation of history and phys exam embedding
             x["emb"] = torch.tensor(emb, device=self.device)
+        elif self.type == "span": 
+            emb = self.df.iloc[idx][f"{self.compl}_span_{self.sympt}"] # select span embedding for this symptom
+            x["emb"] = torch.tensor(emb, device=self.device, dtype=torch.float32)
         else: 
             print("invalid type")
 
